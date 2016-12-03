@@ -8,6 +8,7 @@ import os
 import csv
 import numpy as np
 import constants
+import pandas as pd
 
 
 def load_news_dict():
@@ -35,28 +36,35 @@ def load_news_dict():
                 features_dict[name].append(row[" " + name])
 
     # Determine the number of samples.
-    N = len(features_dict[prediction_name])
+    N = len(features_dict[feature_names[0]])
 
     return features_dict, N
 
 
-def load_news_matrix():
-    """Convert the data from dictionary into a matrix."""
+#def load_feature_matrix():
+#    """Convert the data from dictionary into a matrix."""
+#
+#    # Retrieve the names of the data.
+#    prediction_name, feature_names = constants.data_labels()
+#
+#    # Get the dictionary.
+#    features_dict, N = load_news_dict()
+#    # Create a list and populate it with lists in the order of feature names.
+#    features_list = []
+#    for name in feature_names:
+#        features_list.append(features_dict[name])
+#
+#    # Use Numpy functions to convert the list of lists to matrix.
+#    X = np.transpose(np.stack(features_list)).astype(float)
+#
+#    return X, N
 
-    # Retrieve the names of the data.
-    prediction_name, feature_names = constants.data_labels()
 
-    # Get the dictionary.
-    features_dict, N = load_news_dict()
-    # Create a list and populate it with lists in the order of feature names.
-    features_list = []
-    for name in feature_names:
-        features_list.append(features_dict[name])
+def load_feature_matrix():
+    data = pd.read_csv(constants.data_path(), sep=',')
+    X = np.array(data)[:, 1:60].astype(float)
 
-    # Use Numpy functions to convert the list of lists to matrix.
-    X = np.transpose(np.stack(features_list)).astype(float)
-
-    return X, N
+    return X, X.shape[0]
 
 
 def write_array(A, name='temp_array.csv'):

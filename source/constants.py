@@ -49,6 +49,6 @@ def data_labels():
                      'avg_negative_polarity', 'min_negative_polarity',
                      'max_negative_polarity', 'title_subjectivity',
                      'title_sentiment_polarity', 'abs_title_subjectivity',
-                     'abs_title_sentiment_polarity', 'shares']
+                     'abs_title_sentiment_polarity']
 
     return PREDICTION_NAME, FEATURE_NAMES
