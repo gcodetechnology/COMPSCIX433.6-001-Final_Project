@@ -46,9 +46,9 @@ def load_news_data(name='OnlineNewsPopularity.csv'):
                      'avg_negative_polarity', 'min_negative_polarity',
                      'max_negative_polarity', 'title_subjectivity',
                      'title_sentiment_polarity', 'abs_title_subjectivity',
-                     'abs_title_sentiment_polarity']
+                     'abs_title_sentiment_polarity', 'shares']
 
-   # Create a dictionary that will map the names to the lists of values.
+    # Create a dictionary that will map the names to the lists of values.
     feature_lists = {}
 
     # Populate the dictionary with keys and corresponding empty lists.
@@ -63,7 +63,10 @@ def load_news_data(name='OnlineNewsPopularity.csv'):
                 # The raw data has a space before each column header name.
                 feature_lists[name].append(row[" " + name])
 
-    return feature_lists
+    # Determine the number of samples.
+    N = len(feature_lists['shares'])
+
+    return feature_lists, N
 
 
 def write_array(A, name='temp_array.csv'):
