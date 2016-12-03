@@ -5,6 +5,7 @@ Created on Fri Dec  2 19:34:56 2016
 @author: Eric
 """
 
-from file_ops import FileOperations as fo
+import file_ops as fo
 
+# Import the features from the raw data file.
 feature_lists = fo.load_news_data()
