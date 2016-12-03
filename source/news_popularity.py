@@ -7,6 +7,7 @@ Created on Fri Dec  2 19:34:56 2016
 
 import file_ops as fo
 
+
 # Import the features from the raw data file.
-feature_lists, N = fo.load_news_data()
+X, N = fo.load_news_matrix()
 print("The number of samples is ", N)
