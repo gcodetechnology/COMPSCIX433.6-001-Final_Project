@@ -2,7 +2,8 @@
 Machine learning final project.
 
 __Instructions for installing Plotly__
-o install Plotly's python package, use the package manager pip inside your terminal. If you don't have pip installed on your machine, click here for pip's installation instructions.
+
+To install Plotly's python package, use the package manager pip inside your terminal. If you don't have pip installed on your machine, click here for pip's installation instructions.
 
 $ pip install plotly or $ sudo pip install plotly
 
