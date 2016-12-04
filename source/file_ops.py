@@ -63,8 +63,9 @@ def load_news_dict():
 def load_feature_matrix():
     data = pd.read_csv(constants.data_path(), sep=',')
     X = np.array(data)[:, 1:60].astype(float)
+    T = np.array(data)[:, 60].astype(float)
 
-    return X, X.shape[0]
+    return X, T, X.shape[0]
 
 
 def write_array(A, name='temp_array.csv'):
