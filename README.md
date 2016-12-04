@@ -1,8 +1,8 @@
 # COMPSCIX433.6-001-Final_Project
 Machine learning final project.
 
-__Instructions for installing__
-Plotly To install Plotly's python package, use the package manager pip inside your terminal. If you don't have pip installed on your machine, click here for pip's installation instructions.
+__Instructions for installing Plotly__
+o install Plotly's python package, use the package manager pip inside your terminal. If you don't have pip installed on your machine, click here for pip's installation instructions.
 
 $ pip install plotly or $ sudo pip install plotly
 
