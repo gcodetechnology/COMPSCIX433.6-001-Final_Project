@@ -29,3 +29,13 @@ def Xrec(P, V, μ, n=1):
     R = (np.dot(P[:, 0: n], V[0: n, :]))
     Xrec = R + μ
     return Xrec
+
+
+def create_var_plot(λ):
+    var_plot = np.zeros(len(λ))
+    lam_sum = 0
+    sum_eigv = np.sum(λ)
+    for i, lam in enumerate(λ):
+        lam_sum = lam + lam_sum
+        var_plot[i] = 100 * (lam_sum / sum_eigv)
+    return var_plot

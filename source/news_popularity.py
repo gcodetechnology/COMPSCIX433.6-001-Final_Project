@@ -24,13 +24,16 @@ Xrec = pca.Xrec(P, V, μ, 100)
 diff = Xrec - X
 print("The max diff is ", np.amax(np.abs(diff)))
 
+# Calculate cumalitive variance and plot it.
+cum_variance = pca.create_var_plot(λ)
+plt.plot(cum_variance)
+
 # Create a 2D plot
 #plt.plot(P[:, 0:1], P[:, 1:2], 'r.')
 
 # Create a 3D plot
 #ax = fig.add_subplot(111, projection='3d')
 #ax.scatter(P[:, 0], P[:, 1], T)
-
 
 # Create 3D plot with Plotly.
 trace1 = go.Scatter3d(x=P[:, 0], y=P[:, 1], z=T,
