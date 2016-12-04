@@ -62,7 +62,7 @@ def load_news_dict():
 
 def load_feature_matrix():
     data = pd.read_csv(constants.data_path(), sep=',')
-    X = np.array(data)[:, 1:60].astype(float)
+    X = np.array(data)[:, 2:60].astype(float)
     T = np.array(data)[:, 60].astype(float)
 
     return X, T, X.shape[0]
