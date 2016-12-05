@@ -8,39 +8,42 @@ Created on Fri Dec  2 19:34:56 2016
 import file_ops as fo
 import pca
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 import plotly
 import plotly.graph_objs as go
 
+# Turn plots on or off.
+plotVariance = 0
+plot2D = 1
 plot3D = 0
+normalize = 1
+
+threshold = 9000  # Number of shares that indicates popular.
 
 # Import the features from the raw data file.
 X, T, N = fo.load_feature_matrix()
 print("The number of samples is ", N)
 
-
-P, V, μ, λ = pca.PCA(X)
+P, V, μ, λ = pca.PCA(X, normalize)
 Xrec = pca.Xrec(P, V, μ, 100)
 diff = Xrec - X
 print("The max diff is ", np.amax(np.abs(diff)))
 
 # Calculate cumalitive variance and plot it.
-cum_variance = pca.create_var_plot(λ)
-plt.figure(1)
-plt.plot(cum_variance)
+if plotVariance == 1:
+    cum_variance = pca.calculate_variance(λ)
+    plt.figure(1)
+    plt.plot(cum_variance)
 
-
-threshold = 1400  # Number of shares that indicates popular.
-
-# Get the popular records of the first and second principal components.
-P_pop = np.array([j for (i, j) in zip(T, P[:, 0:2]) if i >= 1400])  # popular records
-P_unpop = np.array([j for (i, j) in zip(T, P[:, 0:2]) if i < 1400])  # unpopular records
+# Get the records of the first and second principal components.
+P_pop = np.array([j for (i, j) in zip(T, P[:, 0:2]) if i >= threshold])
+P_unpop = np.array([j for (i, j) in zip(T, P[:, 0:2]) if i < threshold])
 
 # Create a 2D point cloud.
-plt.figure(2)
-plt.plot(P_pop[:, 0:1], P_pop[:, 1:2], 'r.')
-plt.plot(P_unpop[:, 0:1], P_unpop[:, 1:2], 'b.')
+if plot2D == 1:
+    plt.figure(2)
+    plt.plot(P_unpop[:, 0:1], P_unpop[:, 1:2], 'b.')
+    plt.plot(P_pop[:, 0:1], P_pop[:, 1:2], 'r.')
 
 # Create 3D plot with Plotly.
 if plot3D == 1:
