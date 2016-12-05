@@ -13,18 +13,21 @@ import plotly
 import plotly.graph_objs as go
 
 # Turn plots on or off.
-plotVariance = 0
+plotVariance = 1
 plot2D = 1
 plot3D = 0
-normalize = 1
 
-threshold = 9000  # Number of shares that indicates popular.
+# Turn rescaling on or off.
+rescale = 1
+
+# Define the number of shares that indicate popular.
+threshold = 9000
 
 # Import the features from the raw data file.
 X, T, N = fo.load_feature_matrix()
 print("The number of samples is ", N)
 
-P, V, μ, λ = pca.PCA(X, normalize)
+P, V, μ, λ = pca.PCA(X, rescale)
 Xrec = pca.Xrec(P, V, μ, 100)
 diff = Xrec - X
 print("The max diff is ", np.amax(np.abs(diff)))

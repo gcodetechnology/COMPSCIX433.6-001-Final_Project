@@ -8,10 +8,10 @@ import numpy as np
 import numpy.linalg as LA
 
 
-def mean_vector(X, normalize=0):
+def mean_vector(X, rescale=0):
     """Given a matrix, return the mean adjusted matrix and mean vector."""
     μ = np.mean(X, axis=0)  # this is the mean vector
-    if normalize == 1:
+    if rescale == 1:
         sigma = np.std(X, axis=0)
     else:
         sigma = 1
@@ -19,8 +19,8 @@ def mean_vector(X, normalize=0):
     return(Z, μ)
 
 
-def PCA(X, normalize=0):
-    Z, μ = mean_vector(X, normalize)
+def PCA(X, rescale=0):
+    Z, μ = mean_vector(X, rescale)
     C = np.cov(Z, rowvar=False)
     [λ, V] = LA.eigh(C)
     λ = np.flipud(λ)
