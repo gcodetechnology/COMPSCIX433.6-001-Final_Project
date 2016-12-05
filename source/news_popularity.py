@@ -13,7 +13,7 @@ import plotly
 import plotly.graph_objs as go
 
 # Turn plots on or off.
-plotVariance = 1
+plotVariance = 0
 plot2D = 1
 plot3D = 0
 
@@ -21,7 +21,7 @@ plot3D = 0
 rescale = 1
 
 # Define the number of shares that indicate popular.
-threshold = 9000
+threshold = 15000
 
 # Import the features from the raw data file.
 X, T, N = fo.load_feature_matrix()
@@ -41,6 +41,8 @@ if plotVariance == 1:
 # Get the records of the first and second principal components.
 P_pop = np.array([j for (i, j) in zip(T, P[:, 0:2]) if i >= threshold])
 P_unpop = np.array([j for (i, j) in zip(T, P[:, 0:2]) if i < threshold])
+T_pop = np.array([i for i in T if i >= threshold])
+T_unpop = np.array([i for i in T if i < threshold])
 
 # Create a 2D point cloud.
 if plot2D == 1:
@@ -50,11 +52,12 @@ if plot2D == 1:
 
 # Create 3D plot with Plotly.
 if plot3D == 1:
-    trace1 = go.Scatter3d(x=P[:, 0], y=P[:, 1], z=T,
+    trace1 = go.Scatter3d(x=P_unpop[:, 0], y=P_unpop[:, 1], z=T_unpop,
                           mode='markers',
-                          marker=dict(size=4))
-    #                      line=dict(color='rgba(217, 217, 217, 0.14)', width=0.1),
-    #                      opacity=0.9)
+                          marker=dict(size=4, color='rgba(0,0,200,.7)'))
+    trace2 = go.Scatter3d(x=P_pop[:, 0], y=P_pop[:, 1], z=T_pop,
+                          mode='markers',
+                          marker=dict(size=4, color='rgba(200,0,0,.7)'))
     layout = go.Layout(margin=dict(l=0, r=0, b=0, t=0))
-    fig = go.Figure(data=[trace1], layout=layout)
+    fig = go.Figure(data=[trace1, trace2], layout=layout)
     plotly.offline.plot(fig, filename='simple-3d-scatter')
