@@ -19,7 +19,7 @@ def mean_vector(X, rescale=0):
     return(Z, μ)
 
 
-def PCA(X, rescale=0):
+def pca_manual(X, rescale=0):
     Z, μ = mean_vector(X, rescale)
     C = np.cov(Z, rowvar=False)
     [λ, V] = LA.eigh(C)
