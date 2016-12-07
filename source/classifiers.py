@@ -36,7 +36,7 @@ def bin_edges(single_axis, B):
     return bin_edges
 
 
-def create_hist(B, x_coordinates, y_coordinates, data_range):
+def histogram(B, x_coordinates, y_coordinates, data_range):
     """Manually calculate the histogram."""
     histogram = np.zeros((B, B))
     x1_min = data_range[0][0]
@@ -58,7 +58,33 @@ def create_hist(B, x_coordinates, y_coordinates, data_range):
     return histogram
 
 
-def create_hist_np(B, x_coordinates, y_coordinates, data_range):
+def hist_weighted(B, x_coords, y_coords, Z_values, data_range):
+    """Manually calculate a histogram and return the average Z value of all
+    points within the histogram."""
+    histogram = np.zeros((B, B))
+    values_total = np.zeros((B, B))
+    x1_min = data_range[0][0]
+    x1_max = data_range[0][1]
+    x2_min = data_range[1][0]
+    x2_max = data_range[1][1]
+    for i, x in enumerate(x_coords):
+        x_histogram_pos = (x - x1_min) / (x1_max - x1_min)
+        y_histogram_pos = (y_coords[i] - x2_min) / (x2_max - x2_min)
+        if x_histogram_pos >= 1:
+            ix = B - 1
+        else:
+            ix = int(B * x_histogram_pos)
+        if y_histogram_pos >= 1:
+            iy = B - 1
+        else:
+            iy = int(B * y_histogram_pos)
+        histogram[ix, iy] = histogram[ix, iy] + 1
+        values_total[ix, iy] = values_total[ix, iy] + Z_values[i]
+    values_avg = np.nan_to_num(values_total / histogram)
+    return histogram, values_avg
+
+
+def histogram_np(B, x_coordinates, y_coordinates, data_range):
     """Use Numpy to calculate the histogram."""
 #    data_range = [[x1_min, x1_max], [x2_min, x2_max]]
     histogram = np.histogram2d(x_coordinates, y_coordinates, B, data_range)[0]

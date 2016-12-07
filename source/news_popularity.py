@@ -25,7 +25,8 @@ B = 40  # Define the number of histogram bins to use.
 # Determine which calculations will be used/performed.
 rescale = True  # Turn rescaling on or off.
 manual_pca = True  # If equal to 0 then use sklearn for PCA.
-calc_histogram = True  # Turn histogram calculation on/off.
+histogram_binary = True  # Predicts binary classification based on threshold
+histogram_shares = False  # Predicts number of shares - not classification.
 mse = True  # Perform mean-square error linear classifier
 
 # Choose which plots to display
@@ -34,6 +35,7 @@ plot2D = False  # Turns the 2D plot on/off.
 calc_Kmeans = False  # Turn the Kmeans calculation on/off.
 plot3D = False  # Turns the 3D plot on/off.
 plot2Dhistogram = False  # Turns this histogram plot on/off.
+plot3Dhistogram_binary = False
 plot3Dhistogram = False
 
 #####################################################################
@@ -78,22 +80,21 @@ T_unpop = np.array([i for i in T_train if i < threshold])
 
 
 #####################################################################
-# The following are histogram based predictions.
+# Histogram based predictions for binary classification.
 #####################################################################
-if calc_histogram:
+if histogram_binary:
     # Calculate the bin edges for the histograms.
     bin_edges1_x = cls.bin_edges(P[:, 0], B)
     bin_edges1_y = cls.bin_edges(P[:, 1], B)
 
     # Create histograms.
-    hist_pop = cls.create_hist_np(B, P_pop[:, 0], P_pop[:, 1], data_range)
-    hist_unpop = cls.create_hist_np(B, P_unpop[:, 0],
-                                    P_unpop[:, 1], data_range)
+    hist_pop = cls.histogram_np(B, P_pop[:, 0], P_pop[:, 1], data_range)
+    hist_unpop = cls.histogram_np(B, P_unpop[:, 0], P_unpop[:, 1], data_range)
 
     true_postive = 0  # true positive count
     true_negative = 0  # true negative count
-    correct = 0  # correct predictions
-    incorrect = 0  # incorrect predictions
+    correct_hist = 0  # correct predictions
+    incorrect_hist = 0  # incorrect predictions
 
     # Iterate over the test samples and check if they match expected.
     for i, x in enumerate(X_test):
@@ -101,7 +102,7 @@ if calc_histogram:
         z = (x - μ) / sigma  # mean subtracted features
         p = np.dot(z, V[0:2, :].T)
 
-        # Calculate the probabilities using histogram classifier group 1
+        # Calculate the probabilities
         pop_count = cls.count(p[0], p[1], bin_edges1_x, bin_edges1_y,
                               hist_pop)
         unpop_count = cls.count(p[0], p[1], bin_edges1_x, bin_edges1_y,
@@ -113,20 +114,56 @@ if calc_histogram:
             pop_prediction = 0
         if pop_prediction >= 0.5 and t >= threshold:
             true_postive += 1
-            correct += 1
+            correct_hist += 1
         elif pop_prediction < 0.5 and t < threshold:
             true_negative += 1
-            correct += 1
+            correct_hist += 1
         else:
-            incorrect += 1
+            incorrect_hist += 1
     print('\n### HISTOGRAM RESULTS ###')
-    print('Number of correct predictions ', correct)
-    print('Number of incorrect predictions ', incorrect)
-    print('Percentage correct ', (correct / (correct + incorrect)))
+    print('Number of correct predictions ', correct_hist)
+    print('Number of incorrect predictions ', incorrect_hist)
+    print('Accuracy ', (correct_hist / (correct_hist + incorrect_hist)))
 
 
 #####################################################################
-# The following are linear classifier based predictions.
+# Histogram based predictions for regression prediction.
+#####################################################################
+if histogram_shares:
+    # Remove the outliers since it adversely affects the prediction.
+    P_clean = np.array([j for (i, j) in zip(T_train, P[:, 0:2]) if i < 100000])
+    T_clean = np.array([i for i in T_train if i < 100000])
+    X_test_clean = np.array([j for (i, j) in zip(T_test, X_test)
+                             if i < 100000])
+    T_test_clean = np.array([i for i in T_test if i < 100000])
+    bin_edges1_x = cls.bin_edges(P_clean[:, 0], B)
+    bin_edges1_y = cls.bin_edges(P_clean[:, 1], B)
+
+    d_range = [[np.amin(P_clean[:, 0]), np.amax(P_clean[:, 0])],
+               [np.amin(P_clean[:, 1]), np.amax(P_clean[:, 1])]]
+
+    # Create histograms
+    hist_counts, hist_values = cls.hist_weighted(B, P_clean[:, 0],
+                                                 P_clean[:, 1],
+                                                 T_clean, d_range)
+    # Iterate over the test samples and check if they match expected.
+    error_list = []
+    for i, x in enumerate(X_test_clean):
+        t = T_test_clean[i]  # This is the corresponding target
+        z = (x - μ) / sigma  # mean subtracted features
+        p = np.dot(z, V[0:2, :].T)
+
+        # Predict number of shares
+        avg_value = cls.count(p[0], p[1], bin_edges1_x, bin_edges1_y,
+                              hist_values)
+        # Determine the error.
+        error = abs(t - avg_value) / t
+        error_list.append(error)
+    error_list = np.array(error_list)
+
+
+#####################################################################
+# Linear classifier based predictions for binary classification.
 #####################################################################
 if mse:
     Xa = np.insert(X_train, 0, 0, axis=1)
@@ -141,22 +178,22 @@ if mse:
 
     Xa_test = np.insert(X_test, 0, 0, axis=1)
 
-    correct_linear = 0
-    incorrect_linear = 0
+    correct_lin = 0
+    incorrect_lin = 0
     for i, x in enumerate(Xa_test):
         t = T_test[i]  # This is the target
         prediction = (np.dot(x, W_binary))
         if prediction >= 0 and t >= threshold:
-            correct_linear += 1
+            correct_lin += 1
         elif prediction < 0 and t < threshold:
-            correct_linear += 1
+            correct_lin += 1
         else:
-            incorrect_linear += 1
+            incorrect_lin += 1
     print('\n### LINEAR CLASSIFIER RESULTS ###')
-    print('Number of correct predictions ', correct_linear)
-    print('Number of incorrect predictions ', incorrect_linear)
-    print('Percentage correct ', (correct_linear /
-                                 (correct_linear + incorrect_linear)))
+    print('Number of correct predictions ', correct_lin)
+    print('Number of incorrect predictions ', incorrect_lin)
+    print('Accuracy ', (correct_lin / (correct_lin + incorrect_lin)))
+
 
 #####################################################################
 # Below is the code that generates the plots if they are enabled.
@@ -218,7 +255,7 @@ if plot2Dhistogram:
     fig2 = go.Figure(data=data, layout=layout)
     plotly.offline.plot(fig2, filename='histogram.html')
 
-if plot3Dhistogram:
+if plot3Dhistogram_binary:
     fig = plt.figure(3)
     ax = Axes3D(fig)
 
@@ -229,7 +266,7 @@ if plot3Dhistogram:
     y1_pos = y1_pos.flatten()
     z1_pos = hist_unpop.flatten()
     ax.bar3d(x1_pos, y1_pos, np.zeros(len(z1_pos)), 1, 1,
-             z1_pos, color='b', alpha=0.70)
+             z1_pos, color='b', alpha=0.50)
 
     # popular
     x2_pos, y2_pos = np.meshgrid(np.arange(hist_pop.shape[1]),
@@ -239,6 +276,21 @@ if plot3Dhistogram:
     z2_pos = hist_pop.flatten()
     ax.bar3d(x2_pos, y2_pos, np.zeros(len(z2_pos)), 1, 1,
              z2_pos, color='r', alpha=0.40)
+    ax.view_init(elev=15, azim=0)
+    ax.dist = 12
+    plt.show()
+
+if plot3Dhistogram:
+    fig = plt.figure(3)
+    ax = Axes3D(fig)
+    x1_pos, y1_pos = np.meshgrid(np.arange(hist_values.shape[1]),
+                                 np.arange(hist_values.shape[0]))
+    x1_pos = x1_pos.flatten()
+    y1_pos = y1_pos.flatten()
+    z1_pos = hist_values.flatten()
+    ax.bar3d(x1_pos, y1_pos, np.zeros(len(z1_pos)), 1, 1,
+             z1_pos, color='b', alpha=0.50)
+
     ax.view_init(elev=15, azim=0)
     ax.dist = 12
     plt.show()
