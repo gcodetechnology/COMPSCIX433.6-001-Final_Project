@@ -26,11 +26,12 @@ B = 40  # Define the number of histogram bins to use.
 rescale = True  # Turn rescaling on or off.
 manual_pca = True  # If equal to 0 then use sklearn for PCA.
 calc_histogram = True  # Turn histogram calculation on/off.
+mse = True  # Perform mean-square error linear classifier
 
 # Choose which plots to display
 plotVariance = False  # Turns the variance plot on/off.
-plot2D = True  # Turns the 2D plot on/off.
-calc_Kmeans = True  # Turn the Kmeans calculation on/off.
+plot2D = False  # Turns the 2D plot on/off.
+calc_Kmeans = False  # Turn the Kmeans calculation on/off.
 plot3D = False  # Turns the 3D plot on/off.
 plot2Dhistogram = False  # Turns this histogram plot on/off.
 plot3Dhistogram = False
@@ -50,7 +51,7 @@ X_train = X[0:N_train, :]
 X_test = X[N_train:, :]
 T_train = T[0:N_train]
 T_test = T[N_train:]
-
+ 
 # Calculate the P matrix.
 if manual_pca:
     P, V, μ, λ, sigma = pca_calcs.pca_manual(X_train, rescale)
@@ -113,9 +114,40 @@ if calc_histogram:
             correct += 1
         else:
             incorrect += 1
+    print('\n### HISTOGRAM RESULTS ###')
     print('Number of correct predictions ', correct)
     print('Number of incorrect predictions ', incorrect)
     print('Percentage correct ', (correct / (correct + incorrect)))
+
+if mse:
+    Xa = np.insert(X_train, 0, 0, axis=1)
+    Xa_pinv = np.linalg.pinv(Xa)
+    T_train_binary = np.full(len(T_train), -1, dtype=np.int8)
+
+    for i, e in enumerate(T_train):
+        if e >= threshold:
+            T_train_binary[i] = 1
+
+    W_binary = np.dot(Xa_pinv, T_train_binary)
+
+    Xa_test = np.insert(X_test, 0, 0, axis=1)
+
+    correct_linear = 0
+    incorrect_linear = 0
+    for i, x in enumerate(Xa_test):
+        t = T_test[i]  # This is the target
+        prediction = (np.dot(x, W_binary))
+        if prediction >= 0 and t >= threshold:
+            correct_linear += 1
+        elif prediction < 0 and t < threshold:
+            correct_linear += 1
+        else:
+            incorrect_linear += 1
+    print('\n### LINEAR CLASSIFIER RESULTS ###')
+    print('Number of correct predictions ', correct_linear)
+    print('Number of incorrect predictions ', incorrect_linear)
+    print('Percentage correct ', (correct_linear /
+                                 (correct_linear + incorrect_linear)))
 
 #####################################################################
 # Below is the code that generates the plots if enabled.
