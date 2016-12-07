@@ -11,6 +11,34 @@ import constants
 import pandas as pd
 
 
+def load_feature_matrix(shuffle=False):
+    data = pd.read_csv(constants.data_path(), sep=',')
+    data = np.array(data)[:, 2:61].astype(float)
+    if shuffle:
+        np.random.shuffle(data)
+    X = np.array(data)[:, 0:58]
+    T = np.array(data)[:, 58]
+
+    return X, T, X.shape[0]
+
+
+def write_array(A, name='temp_array.csv'):
+    cwd = os.getcwd()
+    def_path = os.path.join(cwd, name)
+    array = np.expand_dims(A, 1)
+    with open(def_path, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerows(array)
+
+
+def write_matrix(M, name='temp_matrix.csv'):
+    cwd = os.getcwd()
+    def_path = os.path.join(cwd, name)
+    with open(def_path, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerows(M)
+
+
 def load_news_dict():
     """Load all the data from file into a dictionary."""
 
@@ -39,47 +67,3 @@ def load_news_dict():
     N = len(features_dict[feature_names[0]])
 
     return features_dict, N
-
-
-#def load_feature_matrix():
-#    """Convert the data from dictionary into a matrix."""
-#
-#    # Retrieve the names of the data.
-#    prediction_name, feature_names = constants.data_labels()
-#
-#    # Get the dictionary.
-#    features_dict, N = load_news_dict()
-#    # Create a list and populate it with lists in the order of feature names.
-#    features_list = []
-#    for name in feature_names:
-#        features_list.append(features_dict[name])
-#
-#    # Use Numpy functions to convert the list of lists to matrix.
-#    X = np.transpose(np.stack(features_list)).astype(float)
-#
-#    return X, N
-
-
-def load_feature_matrix():
-    data = pd.read_csv(constants.data_path(), sep=',')
-    X = np.array(data)[:, 2:60].astype(float)
-    T = np.array(data)[:, 60].astype(float)
-
-    return X, T, X.shape[0]
-
-
-def write_array(A, name='temp_array.csv'):
-    cwd = os.getcwd()
-    def_path = os.path.join(cwd, name)
-    array = np.expand_dims(A, 1)
-    with open(def_path, 'w', newline='') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerows(array)
-
-
-def write_matrix(M, name='temp_matrix.csv'):
-    cwd = os.getcwd()
-    def_path = os.path.join(cwd, name)
-    with open(def_path, 'w', newline='') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerows(M)

@@ -16,17 +16,17 @@ def mean_vector(X, rescale=0):
     else:
         sigma = 1
     Z = (X - μ) / sigma
-    return(Z, μ)
+    return(Z, μ, sigma)
 
 
 def pca_manual(X, rescale=0):
-    Z, μ = mean_vector(X, rescale)
+    Z, μ, sigma = mean_vector(X, rescale)
     C = np.cov(Z, rowvar=False)
     [λ, V] = LA.eigh(C)
     λ = np.flipud(λ)
     V = np.flipud(np.transpose(V))
     P = np.dot(Z, V.T)
-    return (P, V, μ, λ)
+    return (P, V, μ, λ, sigma)
 
 
 def Xrec(P, V, μ, n=1):
