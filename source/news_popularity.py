@@ -14,6 +14,7 @@ import plotly.graph_objs as go
 from sklearn.decomposition import PCA
 import classifiers as cls
 import math
+from sklearn.cluster import KMeans
 
 #####################################################################
 # Set the variables that will be used for the calculations.
@@ -22,14 +23,15 @@ threshold = 1400  # Define the number of shares that indicate popular.
 B = 20  # Define the number of histogram bins to use.
 plotVariance = 0  # Turns the variance plot on/off.
 plot2D = 1  # Turns the 2D plot on/off.
-plot3D = 0  # Turns the 3D plot on/off.
+calc_Kmeans = 0  # Turn the Kmeans calculation on/off.
+plot3D = 1  # Turns the 3D plot on/off.
 plothistogram = 0  # Turns this histogram plot on/off.
 rescale = 1  # Turn rescaling on or off.
 manual_pca = 1  # If equal to 0 then use sklearn for PCA.
 calc_histogram = 1  # Turn histogram calculation on/off.
 
 #####################################################################
-
+plt.close('all')
 # Import the features from the raw data file.
 X, T, N = fo.load_feature_matrix(shuffle=True)
 print("The number of samples is ", N)
@@ -56,8 +58,8 @@ else:
     P = pca.fit_transform(X_rescale)
 
 # Get the range of coordinates from the first two principal components.
-data_range = [[np.min(P[:, 0]), np.max(P[:, 0])],
-              [np.min(P[:, 1]), np.max(P[:, 1])]]
+data_range = [[np.amin(P[:, 0]), np.amax(P[:, 0])],
+              [np.amin(P[:, 1]), np.amax(P[:, 1])]]
 
 # Divide the data based on a threshold for the number of shares.
 P1_pop = np.array([j for (i, j) in zip(T_train, P[:, 0:2]) if i >= threshold])
@@ -102,6 +104,12 @@ if calc_histogram == 1:
             hist_FP += 1
     p_list = np.array(p_list)
 
+# Attempt to cluster the data if the Kmeans calculation is turned on.
+if calc_Kmeans == 1:
+    km = KMeans(n_clusters=2, init='random', n_init=10, max_iter=1000,
+                tol=1e-05)
+    y_km = km.fit_predict(P)
+
 #####################################################################
 # Below is the code that generates the plots if enabled.
 
@@ -113,8 +121,21 @@ if plotVariance == 1:
 
 if plot2D == 1:
     plt.figure(2)
-    plt.plot(P1_unpop[:, 0], P1_unpop[:, 1], 'b.')
-    plt.plot(P1_pop[:, 0], P1_pop[:, 1], 'r.')
+    if calc_Kmeans == 1:
+        plt.scatter(P[y_km == 0, 0], P[y_km == 0, 1], s=50, c='lightgreen',
+                    marker='o', label='cluster 1')
+        plt.scatter(P[y_km == 1, 0], P[y_km == 1, 1], s=50, c='orange',
+                    marker='o', label='cluster 2')
+        plt.scatter(km.cluster_centers_[:, 0], km.cluster_centers_[:, 1],
+                    s=250, marker='*', c='red', label='centroids')
+    else:
+        plt.scatter(P1_unpop[:, 0], P1_unpop[:, 1], s=50, c='blue', marker='.',
+                    linewidths=0)
+        plt.scatter(P1_pop[:, 0], P1_pop[:, 1], s=50, c='red', marker='.',
+                    linewidths=0, alpha=.4)
+    plt.legend()
+    plt.grid()
+    plt.show()
 
 # Create 3D plot with Plotly.
 if plot3D == 1:
