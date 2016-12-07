@@ -51,7 +51,7 @@ X_train = X[0:N_train, :]
 X_test = X[N_train:, :]
 T_train = T[0:N_train]
 T_test = T[N_train:]
- 
+
 # Calculate the P matrix.
 if manual_pca:
     P, V, μ, λ, sigma = pca_calcs.pca_manual(X_train, rescale)
@@ -69,12 +69,17 @@ else:
 data_range = [[np.amin(P[:, 0]), np.amax(P[:, 0])],
               [np.amin(P[:, 1]), np.amax(P[:, 1])]]
 
-# Divide the data based on a threshold for the number of shares.
+# Separate the data into two classes based on a threshold.
+# Above a certain number of shares will be considered popular.
 P_pop = np.array([j for (i, j) in zip(T_train, P[:, 0:2]) if i >= threshold])
 P_unpop = np.array([j for (i, j) in zip(T_train, P[:, 0:2]) if i < threshold])
 T_pop = np.array([i for i in T_train if i >= threshold])
 T_unpop = np.array([i for i in T_train if i < threshold])
 
+
+#####################################################################
+# The following are histogram based predictions.
+#####################################################################
 if calc_histogram:
     # Calculate the bin edges for the histograms.
     bin_edges1_x = cls.bin_edges(P[:, 0], B)
@@ -119,6 +124,10 @@ if calc_histogram:
     print('Number of incorrect predictions ', incorrect)
     print('Percentage correct ', (correct / (correct + incorrect)))
 
+
+#####################################################################
+# The following are linear classifier based predictions.
+#####################################################################
 if mse:
     Xa = np.insert(X_train, 0, 0, axis=1)
     Xa_pinv = np.linalg.pinv(Xa)
@@ -150,7 +159,7 @@ if mse:
                                  (correct_linear + incorrect_linear)))
 
 #####################################################################
-# Below is the code that generates the plots if enabled.
+# Below is the code that generates the plots if they are enabled.
 #####################################################################
 
 # Calculate cumalitive variance and plot it.
