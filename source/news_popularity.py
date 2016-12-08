@@ -19,7 +19,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 #####################################################################
 # Set the variables that will be used for the calculations.
-threshold = 1400  # Define the number of shares that indicate popular.
+threshold = 6200  # Define the number of shares that indicate popular.
 B = 40  # Define the number of histogram bins to use.
 
 # Determine which calculations will be used/performed.
@@ -27,16 +27,17 @@ rescale = True  # Turn rescaling on or off.
 manual_pca = True  # If equal to 0 then use sklearn for PCA.
 histogram_binary = True  # Predicts binary classification based on threshold
 histogram_shares = False  # Predicts number of shares - not classification.
-mse = True  # Perform mean-square error linear classifier
+mse = False  # Perform mean-square error linear classifier
 calc_Kmeans = False  # Turn the Kmeans calculation on/off.
 
 # Choose which plots to display
+shares_histogram = False  # Show a histogram of the number of shares.
 plotVariance = False  # Turns the variance plot on/off.
-plot2D = True  # Turns the 2D plot on/off.
+plot2D = False  # Turns the 2D plot on/off.
 plot3D = False  # Turns the 3D plot on/off.
 plot2Dhistogram = True  # Turns this histogram plot on/off.
 plot3Dhistogram_binary = False
-plot3Dhistogram = False
+plot3Dhistogram = False  # Histogram shares calculation must be on.
 
 #####################################################################
 
@@ -91,8 +92,10 @@ if histogram_binary:
     hist_hi = cls.histogram_np(B, P_hi[:, 0], P_hi[:, 1], data_range)
     hist_lo = cls.histogram_np(B, P_lo[:, 0], P_lo[:, 1], data_range)
 
-    true_postive = 0  # true positive count
-    true_negative = 0  # true negative count
+    tp_hist = 0  # true positive count
+    tn_hist = 0  # true negative count
+    fp_hist = 0  # false positive count
+    fn_hist = 0  # false negative count
     correct_hist = 0  # correct predictions
     incorrect_hist = 0  # incorrect predictions
 
@@ -110,18 +113,27 @@ if histogram_binary:
 
         if math.isnan(hi_prediction):
             hi_prediction = 0
+
         if hi_prediction >= 0.5 and t >= threshold:
-            true_postive += 1
+            tp_hist += 1
             correct_hist += 1
         elif hi_prediction < 0.5 and t < threshold:
-            true_negative += 1
+            tn_hist += 1
             correct_hist += 1
-        else:
+        elif hi_prediction >= 0.5 and t < threshold:
+            fp_hist += 1
             incorrect_hist += 1
+        elif hi_prediction <= 0.5 and t >= threshold:
+            fn_hist += 1
+            incorrect_hist += 1
+
     print('\n### HISTOGRAM RESULTS ###')
     print('Number of correct predictions ', correct_hist)
     print('Number of incorrect predictions ', incorrect_hist)
     print('Accuracy ', (correct_hist / (correct_hist + incorrect_hist)))
+    print('Sensitivity ', (tp_hist / (tp_hist + fn_hist)))
+    print('Specificity ', (tn_hist / (fp_hist + tn_hist)))
+    print('PPV ', (tp_hist / (fp_hist + tp_hist)))
 
 
 #####################################################################
@@ -252,6 +264,15 @@ if plot2Dhistogram:
     layout = go.Layout(barmode='overlay')
     fig2 = go.Figure(data=data, layout=layout)
     plotly.offline.plot(fig2, filename='histogram.html')
+
+if shares_histogram:
+    trace1 = go.Histogram(x=T_lo, name='high', opacity=0.75,
+                          autobinx=True,
+                          marker=dict(color='rgba(0,200,0,.7)'))
+    data = [trace1]
+    layout = go.Layout(barmode='overlay')
+    fig3 = go.Figure(data=data, layout=layout)
+    plotly.offline.plot(fig3, filename='shares_histogram.html')
 
 if plot3Dhistogram_binary:
     fig = plt.figure(3)
