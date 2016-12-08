@@ -28,13 +28,13 @@ manual_pca = True  # If equal to 0 then use sklearn for PCA.
 histogram_binary = True  # Predicts binary classification based on threshold
 histogram_shares = False  # Predicts number of shares - not classification.
 mse = True  # Perform mean-square error linear classifier
+calc_Kmeans = False  # Turn the Kmeans calculation on/off.
 
 # Choose which plots to display
 plotVariance = False  # Turns the variance plot on/off.
-plot2D = False  # Turns the 2D plot on/off.
-calc_Kmeans = False  # Turn the Kmeans calculation on/off.
+plot2D = True  # Turns the 2D plot on/off.
 plot3D = False  # Turns the 3D plot on/off.
-plot2Dhistogram = False  # Turns this histogram plot on/off.
+plot2Dhistogram = True  # Turns this histogram plot on/off.
 plot3Dhistogram_binary = False
 plot3Dhistogram = False
 
@@ -73,10 +73,10 @@ data_range = [[np.amin(P[:, 0]), np.amax(P[:, 0])],
 
 # Separate the data into two classes based on a threshold.
 # Above a certain number of shares will be considered popular.
-P_pop = np.array([j for (i, j) in zip(T_train, P[:, 0:2]) if i >= threshold])
-P_unpop = np.array([j for (i, j) in zip(T_train, P[:, 0:2]) if i < threshold])
-T_pop = np.array([i for i in T_train if i >= threshold])
-T_unpop = np.array([i for i in T_train if i < threshold])
+P_hi = np.array([j for (i, j) in zip(T_train, P[:, 0:2]) if i >= threshold])
+P_lo = np.array([j for (i, j) in zip(T_train, P[:, 0:2]) if i < threshold])
+T_hi = np.array([i for i in T_train if i >= threshold])
+T_lo = np.array([i for i in T_train if i < threshold])
 
 
 #####################################################################
@@ -88,8 +88,8 @@ if histogram_binary:
     bin_edges1_y = cls.bin_edges(P[:, 1], B)
 
     # Create histograms.
-    hist_pop = cls.histogram_np(B, P_pop[:, 0], P_pop[:, 1], data_range)
-    hist_unpop = cls.histogram_np(B, P_unpop[:, 0], P_unpop[:, 1], data_range)
+    hist_hi = cls.histogram_np(B, P_hi[:, 0], P_hi[:, 1], data_range)
+    hist_lo = cls.histogram_np(B, P_lo[:, 0], P_lo[:, 1], data_range)
 
     true_postive = 0  # true positive count
     true_negative = 0  # true negative count
@@ -103,19 +103,17 @@ if histogram_binary:
         p = np.dot(z, V[0:2, :].T)
 
         # Calculate the probabilities
-        pop_count = cls.count(p[0], p[1], bin_edges1_x, bin_edges1_y,
-                              hist_pop)
-        unpop_count = cls.count(p[0], p[1], bin_edges1_x, bin_edges1_y,
-                                hist_unpop)
+        hi_count = cls.count(p[0], p[1], bin_edges1_x, bin_edges1_y, hist_hi)
+        lo_count = cls.count(p[0], p[1], bin_edges1_x, bin_edges1_y, hist_lo)
 
-        pop_prediction = pop_count / (pop_count + unpop_count)
+        hi_prediction = hi_count / (hi_count + lo_count)
 
-        if math.isnan(pop_prediction):
-            pop_prediction = 0
-        if pop_prediction >= 0.5 and t >= threshold:
+        if math.isnan(hi_prediction):
+            hi_prediction = 0
+        if hi_prediction >= 0.5 and t >= threshold:
             true_postive += 1
             correct_hist += 1
-        elif pop_prediction < 0.5 and t < threshold:
+        elif hi_prediction < 0.5 and t < threshold:
             true_negative += 1
             correct_hist += 1
         else:
@@ -201,7 +199,7 @@ if mse:
 
 # Calculate cumalitive variance and plot it.
 if plotVariance:
-    cum_variance = pca.calculate_variance(λ)
+    cum_variance = pca_calcs.calculate_variance(λ)
     plt.figure(1)
     plt.plot(cum_variance)
 
@@ -222,20 +220,20 @@ if plot2D:
         plt.scatter(km.cluster_centers_[:, 0], km.cluster_centers_[:, 1],
                     s=250, marker='*', c='red', label='centroids')
     else:
-        plt.scatter(P_unpop[:, 0], P_unpop[:, 1], s=50, c='blue', marker='.',
-                    linewidths=0, label='unpopular')
-        plt.scatter(P_pop[:, 0], P_pop[:, 1], s=50, c='red', marker='.',
-                    linewidths=0, alpha=.4, label='popular')
+        plt.scatter(P_lo[:, 0], P_lo[:, 1], s=50, c='blue', marker='.',
+                    linewidths=0, label='low')
+        plt.scatter(P_hi[:, 0], P_hi[:, 1], s=50, c='red', marker='.',
+                    linewidths=0, alpha=.4, label='high')
     plt.legend()
     plt.grid()
     plt.show()
 
 # Create 3D plot with Plotly.
 if plot3D:
-    trace1 = go.Scatter3d(x=P_unpop[:, 0], y=P_unpop[:, 1], z=T_unpop,
+    trace1 = go.Scatter3d(x=P_lo[:, 0], y=P_lo[:, 1], z=T_lo,
                           mode='markers',
                           marker=dict(size=4, color='rgba(0,0,200,.7)'))
-    trace2 = go.Scatter3d(x=P_pop[:, 0], y=P_pop[:, 1], z=T_pop,
+    trace2 = go.Scatter3d(x=P_hi[:, 0], y=P_hi[:, 1], z=T_hi,
                           mode='markers',
                           marker=dict(size=4, color='rgba(200,0,0,.7)'))
     layout = go.Layout(margin=dict(l=0, r=0, b=0, t=0))
@@ -244,10 +242,10 @@ if plot3D:
 
 # Create histogram with Plotly.
 if plot2Dhistogram:
-    trace1 = go.Histogram(x=P_pop[:, 0], name='popular', opacity=0.75,
+    trace1 = go.Histogram(x=P_hi[:, 0], name='high', opacity=0.75,
                           autobinx=True,
                           marker=dict(color='rgba(200,0,0,.7)'))
-    trace2 = go.Histogram(x=P_unpop[:, 0], name='unpopular', opacity=0.75,
+    trace2 = go.Histogram(x=P_lo[:, 0], name='low', opacity=0.75,
                           autobinx=True,
                           marker=dict(color='rgba(0,0,200,.7)'))
     data = [trace1, trace2]
@@ -259,21 +257,21 @@ if plot3Dhistogram_binary:
     fig = plt.figure(3)
     ax = Axes3D(fig)
 
-    # unpopular
-    x1_pos, y1_pos = np.meshgrid(np.arange(hist_unpop.shape[1]),
-                                 np.arange(hist_unpop.shape[0]))
+    # lo
+    x1_pos, y1_pos = np.meshgrid(np.arange(hist_lo.shape[1]),
+                                 np.arange(hist_lo.shape[0]))
     x1_pos = x1_pos.flatten()
     y1_pos = y1_pos.flatten()
-    z1_pos = hist_unpop.flatten()
+    z1_pos = hist_lo.flatten()
     ax.bar3d(x1_pos, y1_pos, np.zeros(len(z1_pos)), 1, 1,
              z1_pos, color='b', alpha=0.50)
 
     # popular
-    x2_pos, y2_pos = np.meshgrid(np.arange(hist_pop.shape[1]),
-                                 np.arange(hist_pop.shape[0]))
+    x2_pos, y2_pos = np.meshgrid(np.arange(hist_hi.shape[1]),
+                                 np.arange(hist_hi.shape[0]))
     x2_pos = x2_pos.flatten()
     y2_pos = y2_pos.flatten()
-    z2_pos = hist_pop.flatten()
+    z2_pos = hist_hi.flatten()
     ax.bar3d(x2_pos, y2_pos, np.zeros(len(z2_pos)), 1, 1,
              z2_pos, color='r', alpha=0.40)
     ax.view_init(elev=15, azim=0)
